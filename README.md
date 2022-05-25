@@ -2,18 +2,20 @@
 ## build contract
 ```shell
 RUSTFLAGS='-C link-arg=-s' cargo build --target wasm32-unknown-unknown --release
+mkdir -p res
+cp ./target/wasm32-unknown-unknown/release/near_atomic_test.wasm ./res/
 ```
 ## testnet
-* create account and init balance
-```shell
-near create-account near-atomic-test.yongchun.testnet --masterAccount yongchun.testnet --initialBalance 1
-near send yongchun.testnet near-atomic-test.yongchun.testnet 10
-```
-* deploy
-  * if redeploy, delete the contract first
+* redeploy
+  * if redeploy contract, delete the contract first
 ```shell
 near delete near-atomic-test.yongchun.testnet yongchun.testnet
 ```
+* create account and init balance
+```shell
+near create-account near-atomic-test.yongchun.testnet --masterAccount yongchun.testnet --initialBalance 10
+```
+* deploy
 ```shell
 near deploy --accountId near-atomic-test.yongchun.testnet  --wasmFile ./res/near_atomic_test.wasm --initFunction new --initArgs '{}'
 ```
@@ -41,10 +43,18 @@ near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet get_cou
 view the [transaction on explorer](https://explorer.testnet.near.org/transactions/3MwRwi5BdzrhQqNr7RDfrPr5VkgnzTvbgHVJffQDxSg9)
 ## Promise call
 ### then
-* success:
+#### success case:
 ```shell
 near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": true}"
 ```
+view the [transaction on explorer](https://explorer.testnet.near.org/transactions/AB2YVp5W8vnxMjsPwMDNV5ynEW9GkiquPdS3EhTYF2tz)
+* Result: counter increase by two(from 0 to 2): query the current value [transaction on explorer](https://explorer.testnet.near.org/transactions/9bS8sdhZosLMxp1ydcQCXxnHbWBgAXN3ur9bNLUDXd2n)
+#### with function_call fail case:
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": false}"
+```
+Receipts are: `Receipts: 9ccMBTydfJXkZiQqP2DNqAMPChcfygNX6htSkxcTifW7, 9TynuGyQdjsnKDhL75pppEFvDZHYxDVDcbgn4TV5pg3U, 8gnDDRecbQ7LKzuXkbpL9PrmTeKk7Zx25R6WcS1W71dM`
+* Result: counter increase by two(from 2 to 4): query the current value [transaction on explorer](https://explorer.testnet.near.org/transactions/6KVJaVSNXS734X9sGxnSGnNXU3pqBkm3XbQbMVfDJtED)
 ### promise
 * update state and promise ok
 ```shell
