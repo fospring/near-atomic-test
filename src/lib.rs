@@ -38,6 +38,7 @@ impl Contract {
         self.count
     }
 
+    #[payable]
     pub fn send_native_with_transfer_state(
         &mut self,
         user: AccountId,
@@ -60,9 +61,8 @@ impl Contract {
             .into()
     }
 
-    #[allow(dead_code)]
     #[private]
-    fn on_token_transfer_complete(&mut self, is_transfer_success: bool) -> PromiseOrValue<()> {
+    pub fn on_token_transfer_complete(&mut self, is_transfer_success: bool) -> PromiseOrValue<()> {
         self.increase_and_emit_change();
         if is_transfer_success {
             PromiseOrValue::Value(())
