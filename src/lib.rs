@@ -107,6 +107,13 @@ impl Contract {
             .into()
     }
 
+    pub fn increase_and_transfer(&mut self, amount: U128) -> PromiseOrValue<()> {
+        self.increase_and_emit_change();
+        Promise::new(Contract::get_sub_acc())
+            .transfer(amount.0)
+            .into()
+    }
+
     fn get_sub_acc() -> AccountId {
         let parent_acc = env::current_account_id().to_string();
         let created_acc = SUB_ACC_NAME.to_string() + "." + &parent_acc;

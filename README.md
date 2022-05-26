@@ -69,3 +69,30 @@ view the [transaction on explorer](https://explorer.testnet.near.org/transaction
 * Result: 
   * generate log
   * Promise fail and state did not change.
+
+### Promise action
+* create account `wallet.yongchun.testnet` to receive native NEAR
+```shell
+near create-account wallet.yongchun.testnet --masterAccount yongchun.testnet --initialBalance 1
+```
+### send it near by contract with then promise success.
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"wallet.yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": true}"
+```
+the account's balance increase `100000000:  [tx detail](https://explorer.testnet.near.org/transactions/6Et4hAMCv8E5u2Agie2Ro5DMLboLKuJy3odtRLznoWo4)
+### send it near by contract with then promise fail.
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"wallet.yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": false}"
+```
+* Receipts: 7cmx5Z2BCarCXuk4LKR4QKkFPafBtbp9PcpmpJGHZkMh, 3ZKki25rG9RDU2d3DTqMNwma6WJSVBSWFq9JETx9tDPa, 7hzzSAiNheAZ9E3gZpyt5APbqiWFJVKsDNNC1f662d2M
+* Result: it's balance increase and contract's counter also increase(from 12 to 14),query [transaction details on explorer](https://explorer.testnet.near.org/transactions/2aYNTgJ4WPCUT5zN1tTd6WZhmZ57Xwe77fsDJNJX8qfD)
+### send action fail before then
+```shell
+ near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"wallet.yongchun.testnet\", \"amount\": \"19999508525168242600000000\", \"is_success\": true}"
+```
+```text
+Receipt: 6Ft9gaSquudmQEYdEVS1fq8JMPxPLXT9PZu3zvsiYVSk
+        Log [near-atomic-test.yongchun.testnet]: contract value increase 1, current val is:17
+        Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Exceeded the account balance."}}
+```
+* Result: The first Promise(Send Near) failed, contract counter didn't change, and didn't call next promise
