@@ -112,3 +112,18 @@ Receipt: BL4a6PkXS3b84tArHMrhEnvY1GCFLUbvGR4hmi3SEK3X
         Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Exceeded the account balance."}}
 ```
 * Result: counter did not change.
+
+### Function_Call directly
+calling [on_token_transfer_complete](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L65)
+* fail
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet on_token_transfer_complete "{\"is_transfer_success\": false}"
+```
+```shell
+Doing account.functionCall()
+Receipts: DeDpy92o6B47w2nCRhXP5joCtwBPtkXfopEV7SCZUFAK, H15GNj9dEtidumKLxzfRxh3ittfbLoz16NgHNJUTj7DB
+        Log [near-atomic-test.yongchun.testnet]: contract value increase 1, current val is:21
+Receipt: 5WJ9jDEQub3rhtCE21SSuSwuxKY9hdEom3NQsZ7ophVg
+        Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Smart contract panicked: token transfer has failed"}}
+```
+* Result: the counter has changed from 20 to 21
