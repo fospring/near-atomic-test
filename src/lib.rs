@@ -61,7 +61,7 @@ impl Contract {
             .into()
     }
 
-    #[private]
+    // #[private]
     pub fn on_token_transfer_complete(&mut self, is_transfer_success: bool) -> PromiseOrValue<()> {
         self.increase_and_emit_change();
         if is_transfer_success {
