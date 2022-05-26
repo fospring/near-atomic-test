@@ -126,4 +126,4 @@ Receipts: DeDpy92o6B47w2nCRhXP5joCtwBPtkXfopEV7SCZUFAK, H15GNj9dEtidumKLxzfRxh3i
 Receipt: 5WJ9jDEQub3rhtCE21SSuSwuxKY9hdEom3NQsZ7ophVg
         Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Smart contract panicked: token transfer has failed"}}
 ```
-* Result: the counter has changed from 20 to 21
+* Result: the counter has changed from 20 to 21, query counter state [transaction on explorer](https://explorer.testnet.near.org/transactions/JCKSi8TnAsKbQBg42kZvKUd5iqP1xramhSGDGHkrKZYi) after this call
