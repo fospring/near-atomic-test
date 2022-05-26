@@ -43,6 +43,7 @@ near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet get_cou
 view the [transaction on explorer](https://explorer.testnet.near.org/transactions/3MwRwi5BdzrhQqNr7RDfrPr5VkgnzTvbgHVJffQDxSg9)
 ## Promise call
 ### then
+* calling [send_native_with_transfer_state](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L42)
 #### success case:
 ```shell
 near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": true}"
@@ -56,6 +57,7 @@ near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_na
 Receipts are: `Receipts: 9ccMBTydfJXkZiQqP2DNqAMPChcfygNX6htSkxcTifW7, 9TynuGyQdjsnKDhL75pppEFvDZHYxDVDcbgn4TV5pg3U, 8gnDDRecbQ7LKzuXkbpL9PrmTeKk7Zx25R6WcS1W71dM`
 * Result: counter increase by two(from 2 to 4): query the current value [transaction on explorer](https://explorer.testnet.near.org/transactions/6KVJaVSNXS734X9sGxnSGnNXU3pqBkm3XbQbMVfDJtED)
 ### promise
+* calling [promise_action_create_sub_acc](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L86)
 * update state and promise ok
 ```shell
 near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_action_create_sub_acc "{}"
@@ -76,6 +78,7 @@ view the [transaction on explorer](https://explorer.testnet.near.org/transaction
 near create-account wallet.yongchun.testnet --masterAccount yongchun.testnet --initialBalance 1
 ```
 ### send it near by contract with then promise success.
+calling [send_native_with_transfer_state](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L42)
 ```shell
 near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"wallet.yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": true}"
 ```
@@ -96,3 +99,16 @@ Receipt: 6Ft9gaSquudmQEYdEVS1fq8JMPxPLXT9PZu3zvsiYVSk
         Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Exceeded the account balance."}}
 ```
 * Result: The first Promise(Send Near) failed, contract counter didn't change, and didn't call next promise
+
+### increase counter and send token to sub account(bob.near-atomic-test.yongchun.testnet)
+* calling [increase_and_transfer](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L110)
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet increase_and_transfer "{\"amount\": \"19999508525168242600000000\"}"
+```
+```text
+Doing account.functionCall()
+Receipt: BL4a6PkXS3b84tArHMrhEnvY1GCFLUbvGR4hmi3SEK3X
+        Log [near-atomic-test.yongchun.testnet]: contract value increase 1, current val is:19
+        Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Exceeded the account balance."}}
+```
+* Result: counter did not change.
