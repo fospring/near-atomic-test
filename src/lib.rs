@@ -2,13 +2,14 @@ use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
-    env, near_bindgen, AccountId, Gas, PanicOnDefault, Promise, PromiseOrValue, ONE_NEAR,
+    env, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseOrValue, ONE_NEAR,
 };
 
 pub const ON_TOKEN_TRANSFER_FAILED_COST: Gas = Gas(2 * Gas::ONE_TERA.0);
 pub const ON_TOKEN_TRANSFER_COMPLETE_COST: Gas =
     Gas(10 * Gas::ONE_TERA.0 + ON_TOKEN_TRANSFER_FAILED_COST.0);
 const SUB_ACC_NAME: &str = "bob";
+const TEN_PERCENT_NEAR: Balance = 1_000_000_000_000_000_000_000_000;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -89,6 +90,22 @@ impl Contract {
             .create_account()
             .transfer(ONE_NEAR)
             .add_full_access_key(env::signer_account_pk())
+            .into()
+    }
+
+    pub fn promise_action_create_acc(&mut self, account: AccountId) -> PromiseOrValue<()> {
+        let signer_pk = env::signer_account_pk();
+        env::log_str(&format!("signer_pk={:?}, acc:{}", signer_pk, account));
+        Promise::new(account)
+            .create_account()
+            .transfer(TEN_PERCENT_NEAR)
+            .add_full_access_key(signer_pk)
+            .into()
+    }
+
+    pub fn promise_delete_account(&mut self, account: AccountId) -> PromiseOrValue<()> {
+        Promise::new(account)
+            .delete_account(env::current_account_id())
             .into()
     }
 
