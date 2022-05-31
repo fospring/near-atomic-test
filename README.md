@@ -1,4 +1,14 @@
 # near-atomic-test
+* Near contract status for test
+```rust
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct Contract {
+    count: i32,
+    slots: [i32; 10],
+    num_infos_storage: UnorderedMap<i32, String>,
+}
+```
 ## build contract
 ```shell
 RUSTFLAGS='-C link-arg=-s' cargo build --target wasm32-unknown-unknown --release
@@ -128,11 +138,11 @@ Receipt: 5WJ9jDEQub3rhtCE21SSuSwuxKY9hdEom3NQsZ7ophVg
 ```
 * Result: the counter has changed from 20 to 21, query counter state [transaction on explorer](https://explorer.testnet.near.org/transactions/JCKSi8TnAsKbQBg42kZvKUd5iqP1xramhSGDGHkrKZYi) after this call
 
-# create
+### create
 ```shell
 near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_action_create_acc "{\"account\": \"aaa.near-atomic-test.yongchun.testnet\"}"
 ```
-# delete
+### delete
 ```shell
 near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_delete_account "{\"account\": \"aaa.near-atomic-test.yongchun.testnet\"}"
 ```
@@ -140,3 +150,24 @@ near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise
 near delete aaa.near-atomic-test.yongchun.testnet near-atomic-test.yongchun.testnet --keyPath ~/.near-credentials/testnet/aaa.near-atomic-test.yongchun.testnet.json --masterAccount aaa.near-atomic-test.
 yongchun.testnet
 ```
+
+## panic in loop
+* query vector slots's state:
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet get_slots "{}"
+```
+* set slot's state to 0:
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_0 "{}"
+```
+[tx detail](https://explorer.testnet.near.org/transactions/8B9gZiS5NktEcWF96jevUPSh919g1KNadbQPrwzS7dJj)
+* set slot state to 10:
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10 "{}"
+```
+[tx detail](https://explorer.testnet.near.org/transactions/CxFT4hgYAawQKcNwwmJ5ztqh4bKHrQfmmiJGgU42j9nx)
+* set slot state to 10 but at index of 5 will panic(expected state rollback):
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10_panic_idx5 "{}"
+```
+[tx detail](https://explorer.testnet.near.org/transactions/7znLKekhjrGUEFZYfaQqPSJ3dshGdjkcWpsG9Re4nKgt#GnNLnvQ9xGsrYceqii8tGFeBaFcn37xeucUNFfVZqnX6)
