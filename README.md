@@ -127,3 +127,16 @@ Receipt: 5WJ9jDEQub3rhtCE21SSuSwuxKY9hdEom3NQsZ7ophVg
         Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Smart contract panicked: token transfer has failed"}}
 ```
 * Result: the counter has changed from 20 to 21, query counter state [transaction on explorer](https://explorer.testnet.near.org/transactions/JCKSi8TnAsKbQBg42kZvKUd5iqP1xramhSGDGHkrKZYi) after this call
+
+# create
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_action_create_acc "{\"account\": \"aaa.near-atomic-test.yongchun.testnet\"}"
+```
+# delete
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_delete_account "{\"account\": \"aaa.near-atomic-test.yongchun.testnet\"}"
+```
+```shell
+near delete aaa.near-atomic-test.yongchun.testnet near-atomic-test.yongchun.testnet --keyPath ~/.near-credentials/testnet/aaa.near-atomic-test.yongchun.testnet.json --masterAccount aaa.near-atomic-test.
+yongchun.testnet
+```
