@@ -1,3 +1,4 @@
+use near_sdk::env::panic_str;
 use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
 use near_sdk::{
@@ -22,12 +23,14 @@ pub enum StorageKey {
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct OldContract {
     count: i32,
+    slots: [i32; 10],
 }
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
     count: i32,
+    slots: [i32; 10],
     num_infos_storage: UnorderedMap<i32, String>,
 }
 
@@ -41,6 +44,7 @@ impl Contract {
         assert!(!env::state_exists(), "Already initialized");
         Self {
             count: 0,
+            slots: [10; 10],
             num_infos_storage: UnorderedMap::new(StorageKey::NumInforms),
         }
     }
@@ -50,7 +54,34 @@ impl Contract {
         let old_state: OldContract = env::state_read().expect("failed");
         Self {
             count: old_state.count,
+            slots: old_state.slots,
             num_infos_storage: UnorderedMap::new(StorageKey::NumInforms),
+        }
+    }
+
+    pub fn get_slots(&self) -> [i32; 10] {
+        self.slots.clone()
+    }
+
+    pub fn slot_bit_set_0(&mut self) {
+        for slot in &mut self.slots {
+            *slot = 0;
+        }
+    }
+
+    pub fn slot_bit_set_10(&mut self) {
+        for slot in &mut self.slots {
+            *slot = 10;
+        }
+    }
+
+    pub fn slot_bit_set_10_panic_idx5(&mut self) {
+        for (idx, slot) in self.slots.iter_mut().enumerate() {
+            if idx == 5 {
+                panic_str("panic at index 6");
+            }
+            *slot = 10;
+            env::log_str(&format!("update idx:{},set to 10", idx));
         }
     }
 
