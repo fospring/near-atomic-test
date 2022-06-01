@@ -171,3 +171,13 @@ near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bi
 near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10_panic_idx5 "{}"
 ```
 [tx detail](https://explorer.testnet.near.org/transactions/7znLKekhjrGUEFZYfaQqPSJ3dshGdjkcWpsG9Re4nKgt#GnNLnvQ9xGsrYceqii8tGFeBaFcn37xeucUNFfVZqnX6)
+* set slot state to 10 by function
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10_by_fn "{}"
+```
+[tx detail](https://explorer.testnet.near.org/transactions/EFiiD52cv7mJSU4gJUhNEqUXgrkGbrGn8yyvoHqVrf4P)
+* set slot state to 10 by function, panic at index 5(expected state rollback)
+```shell
+near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10_by_fn_panic_idx5 "{}"
+```
+[tx detail](https://explorer.testnet.near.org/transactions/8C13oyZwsRZfesQn531hJDfc6PJFzMkHKxFmjW3KYh3A#5yQunL5S6t9iGxKi1i3tH7ymVKaJNJRGeQVF8Q1ycxZt)
