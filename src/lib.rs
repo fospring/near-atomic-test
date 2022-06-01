@@ -86,13 +86,13 @@ impl Contract {
     }
 
     pub fn slot_bit_set_10_by_fn(&mut self) {
-        for (idx, _slot) in self.slots.iter_mut().enumerate() {
+        for idx in 0..self.slots.len() {
             self.set_value(idx, 10);
         }
     }
 
     pub fn slot_bit_set_10_by_fn_panic_idx5(&mut self) {
-        for (idx, _slot) in self.slots.iter_mut().enumerate() {
+        for idx in 0..self.slots.len() {
             if idx == 5 {
                 panic_str("panic at index 5");
             }
