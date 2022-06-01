@@ -29,6 +29,10 @@ near create-account near-migration.yongchun.testnet --masterAccount yongchun.tes
 ```shell
 near deploy --accountId near-migration.yongchun.testnet  --wasmFile ./res/near_atomic_test.wasm --initFunction new --initArgs '{}'
 ```
+* upgrade
+```shell
+near deploy --accountId near-migration.yongchun.testnet  --wasmFile ./res/near_atomic_test.wasm --initFunction migrate --initArgs '{}'
+```
 
 * call
 ```shell
