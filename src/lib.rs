@@ -78,11 +78,31 @@ impl Contract {
     pub fn slot_bit_set_10_panic_idx5(&mut self) {
         for (idx, slot) in self.slots.iter_mut().enumerate() {
             if idx == 5 {
-                panic_str("panic at index 6");
+                panic_str("panic at index 5");
             }
             *slot = 10;
-            env::log_str(&format!("update idx:{},set to 10", idx));
+            env::log_str(&format!("update value of idx:{},set to 10", idx));
         }
+    }
+
+    pub fn slot_bit_set_10_by_fn(&mut self) {
+        for (idx, _slot) in self.slots.iter_mut().enumerate() {
+            self.set_value(idx, 10);
+        }
+    }
+
+    pub fn slot_bit_set_10_by_fn_panic_idx5(&mut self) {
+        for (idx, _slot) in self.slots.iter_mut().enumerate() {
+            if idx == 5 {
+                panic_str("panic at index 5");
+            }
+            self.set_value(idx, 10);
+            env::log_str(&format!("update value of idx:{},set to 10", idx));
+        }
+    }
+
+    fn set_value(&mut self, slot_idx: usize, source: i32) {
+        self.slots[slot_idx] = source;
     }
 
     pub fn set_num_info(&mut self, num: i32, info: String) {
