@@ -3,9 +3,7 @@ use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
-    collections::UnorderedMap,
-    env, near_bindgen, AccountId, Balance, BorshStorageKey, Gas, PanicOnDefault, Promise,
-    PromiseOrValue, ONE_NEAR,
+    env, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, Promise, PromiseOrValue, ONE_NEAR,
 };
 
 pub const ON_TOKEN_TRANSFER_FAILED_COST: Gas = Gas(2 * Gas::ONE_TERA.0);
@@ -14,24 +12,11 @@ pub const ON_TOKEN_TRANSFER_COMPLETE_COST: Gas =
 const SUB_ACC_NAME: &str = "bob";
 const TEN_PERCENT_NEAR: Balance = 1_000_000_000_000_000_000_000_000;
 
-#[derive(Debug, BorshStorageKey, BorshSerialize, PartialEq, Eq)]
-pub enum StorageKey {
-    NumInforms,
-}
-
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct OldContract {
-    count: i32,
-    slots: [i32; 10],
-}
-
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
     count: i32,
     slots: [i32; 10],
-    num_infos_storage: UnorderedMap<i32, String>,
 }
 
 #[near_bindgen]
@@ -45,17 +30,6 @@ impl Contract {
         Self {
             count: 0,
             slots: [10; 10],
-            num_infos_storage: UnorderedMap::new(StorageKey::NumInforms),
-        }
-    }
-
-    #[init(ignore_state)]
-    pub fn migrate() -> Self {
-        let old_state: OldContract = env::state_read().expect("failed");
-        Self {
-            count: old_state.count,
-            slots: old_state.slots,
-            num_infos_storage: UnorderedMap::new(StorageKey::NumInforms),
         }
     }
 
@@ -103,14 +77,6 @@ impl Contract {
 
     fn set_value(&mut self, slot_idx: usize, source: i32) {
         self.slots[slot_idx] = source;
-    }
-
-    pub fn set_num_info(&mut self, num: i32, info: String) {
-        self.num_infos_storage.insert(&num, &info);
-    }
-
-    pub fn get_num_info_lens(&self) -> u64 {
-        self.num_infos_storage.len()
     }
 
     pub fn increase_may_panic(&mut self, is_panic: bool) {
