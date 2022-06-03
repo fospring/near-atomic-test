@@ -1,0 +1,1 @@
+alias local_near='near --keyPath=~.near/local/validator_key.json --masterAccount test.near --network_id local'
