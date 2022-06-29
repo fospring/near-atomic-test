@@ -230,12 +230,21 @@ impl Contract {
         ));
     }
 
+    fn async_increase_and_emit_change(&mut self) -> PromiseOrValue<()> {
+        self.count += 1;
+        env::log_str(&format!(
+            "async contract value increase 1, current val is:{}",
+            self.count
+        ));
+        PromiseOrValue::Value(())
+    }
+
     pub fn tx_id_func_call(&mut self) -> PromiseOrValue<()> {
         self.increase_and_emit_change();
 
         Promise::new(env::current_account_id())
             .function_call(
-                "increase_and_emit_change".into(),
+                "async_increase_and_emit_change".into(),
                 json!({}).to_string().into_bytes(),
                 0,
                 ON_TOKEN_TRANSFER_FAILED_COST,
