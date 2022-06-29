@@ -230,19 +230,16 @@ impl Contract {
         ));
     }
 
-    pub fn tx_id_func_call(&mut self, is_transfer_success: bool) -> PromiseOrValue<()> {
+    pub fn tx_id_func_call(&mut self) -> PromiseOrValue<()> {
         self.increase_and_emit_change();
-        if is_transfer_success {
-            PromiseOrValue::Value(())
-        } else {
-            Promise::new(env::current_account_id())
-                .function_call(
-                    "increase_and_emit_change".into(),
-                    json!({}).to_string().into_bytes(),
-                    0,
-                    ON_TOKEN_TRANSFER_FAILED_COST,
-                )
-                .into()
-        }
+
+        Promise::new(env::current_account_id())
+            .function_call(
+                "increase_and_emit_change".into(),
+                json!({}).to_string().into_bytes(),
+                0,
+                ON_TOKEN_TRANSFER_FAILED_COST,
+            )
+            .into()
     }
 }
