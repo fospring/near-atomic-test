@@ -230,7 +230,8 @@ impl Contract {
         ));
     }
 
-    fn async_increase_and_emit_change(&mut self) -> PromiseOrValue<()> {
+    #[private]
+    pub fn async_increase_and_emit_change(&mut self) -> PromiseOrValue<()> {
         self.count += 1;
         env::log_str(&format!(
             "async contract value increase 1, current val is:{}",
