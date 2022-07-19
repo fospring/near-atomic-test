@@ -1,19 +1,27 @@
+
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
-    collections::UnorderedMap,
+    collections::{UnorderedMap, UnorderedSet},
+    env,
+    json_types::U128,
+    serde::{self, Deserialize, Serialize},
+    serde_json, AccountId, Timestamp,
     near_bindgen, BorshStorageKey, PanicOnDefault,
 };
 
 #[derive(Debug, BorshStorageKey, BorshSerialize, PartialEq, Eq)]
 pub enum StorageKey {
-    NumInforms,
+    KeySet,
+    Users,
+    Infos,
 }
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct Contract {
-    count: i32,
-    num_infos_storage: UnorderedMap<i32, String>,
+    _key_sets: UnorderedSet<String>,
+    users: UnorderedMap<AccountId, String>,
+    infos: UnorderedMap<AccountId, u64>,
 }
 
 #[near_bindgen]
@@ -21,24 +29,27 @@ impl Contract {
     #[init]
     pub fn new() -> Self {
         Self {
-            count: 0,
-            num_infos_storage: UnorderedMap::new(StorageKey::NumInforms),
+            _key_sets: UnorderedSet::new(StorageKey::KeySet),
+            users: UnorderedMap::new(StorageKey::Users),
+            infos: UnorderedMap::new(StorageKey::Infos),
         }
     }
 
-    pub fn set_count(&mut self, count: i32) {
-        self.count = count;
+    pub fn set_key(&mut self, skey: String) {
+
+        self._key_sets.insert(&skey);
     }
 
-    pub fn get_count(&self) -> i32 {
-        self.count
+    pub fn has_key(&self, skey: String) -> bool {
+        self._key_sets.contains(&skey)
     }
 
-    pub fn set_num_info(&mut self, num: i32, info: String) {
-        self.num_infos_storage.insert(&num, &info);
+    pub fn set_info(&mut self, acc: AccountId, num: u64) {
+
+        self.infos.insert(&acc, &num);
     }
 
-    pub fn get_num_info(&self, num: i32) -> Option<String> {
-        self.num_infos_storage.get(&num)
+    pub fn get_info(&self, acc: AccountId) -> u64 {
+        self.infos.get(&acc).unwrap_or_default()
     }
 }
