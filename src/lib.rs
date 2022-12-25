@@ -49,8 +49,11 @@ impl Contract {
 
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod tests {
-    use std::cmp::Ordering;
+    use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
     use near_sdk::collections::TreeMap;
+    use std::cmp::Ordering;
+
+    #[derive(Debug, BorshDeserialize, BorshSerialize, Clone)]
     struct Pnl(u128);
 
     impl PartialEq<Self> for Pnl {
@@ -87,6 +90,39 @@ mod tests {
 
     #[test]
     fn test_treemap_order() {
+        let mut tree_map: TreeMap<Pnl, String> = TreeMap::new(b"t");
+        let pnl1 = Pnl(100);
+        let pnl2 = Pnl(500);
+        let pnl3 = Pnl(10000);
+        let pnl4 = Pnl(8000);
+        let pnl5 = Pnl(18000);
+        let pnl6 = Pnl(300);
 
+        tree_map.insert(&pnl1, &"pnl1".to_string());
+        tree_map.insert(&pnl2, &"pnl2".to_string());
+        tree_map.insert(&pnl3, &"pnl3".to_string());
+        tree_map.insert(&pnl4, &"pnl4".to_string());
+        tree_map.insert(&pnl5, &"pnl5".to_string());
+        tree_map.insert(&pnl6, &"pnl6".to_string());
+
+        let max_key = tree_map.max();
+        let min_key = tree_map.min();
+        println!("max key:{:?}, min key:{:?}", max_key, min_key);
+
+        let vec = tree_map.to_vec();
+        println!("treemap vec:{:?}", vec);
+
+        let pnl3_info = tree_map.get(&pnl3).unwrap_or_default();
+        println!("pnl3_info:{}", pnl3_info);
+
+        let pnl6_info = tree_map.get(&pnl6).unwrap_or_default();
+        println!("pnl6_info:{}", pnl6_info);
+
+        let max_info = tree_map.remove(&max_key.unwrap());
+        let min_info = tree_map.remove(&min_key.unwrap());
+        println!("max_info:{:?}, min_info:{:?}", max_info, min_info);
+
+        let vec = tree_map.to_vec();
+        println!("treemap vec after remove max,min:{:?}", vec);
     }
 }
