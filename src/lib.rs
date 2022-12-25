@@ -1,12 +1,7 @@
-
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::{UnorderedMap, UnorderedSet},
-    env,
-    json_types::U128,
-    serde::{self, Deserialize, Serialize},
-    serde_json, AccountId, Timestamp,
-    near_bindgen, BorshStorageKey, PanicOnDefault,
+    near_bindgen, AccountId, BorshStorageKey, PanicOnDefault,
 };
 
 #[derive(Debug, BorshStorageKey, BorshSerialize, PartialEq, Eq)]
@@ -36,7 +31,6 @@ impl Contract {
     }
 
     pub fn set_key(&mut self, skey: String) {
-
         self._key_sets.insert(&skey);
     }
 
@@ -45,11 +39,54 @@ impl Contract {
     }
 
     pub fn set_info(&mut self, acc: AccountId, num: u64) {
-
         self.infos.insert(&acc, &num);
     }
 
     pub fn get_info(&self, acc: AccountId) -> u64 {
         self.infos.get(&acc).unwrap_or_default()
+    }
+}
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod tests {
+    use std::cmp::Ordering;
+    use near_sdk::collections::TreeMap;
+    struct Pnl(u128);
+
+    impl PartialEq<Self> for Pnl {
+        fn eq(&self, other: &Self) -> bool {
+            self.0 == other.0
+        }
+    }
+
+    impl Eq for Pnl {}
+
+    impl PartialOrd<Self> for Pnl {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            if self.0 == other.0 {
+                Some(Ordering::Equal)
+            } else if self.0 > other.0 {
+                Some(Ordering::Less)
+            } else {
+                Some(Ordering::Greater)
+            }
+        }
+    }
+
+    impl Ord for Pnl {
+        fn cmp(&self, other: &Self) -> Ordering {
+            if self.0 == other.0 {
+                Ordering::Equal
+            } else if self.0 > other.0 {
+                Ordering::Less
+            } else {
+                Ordering::Greater
+            }
+        }
+    }
+
+    #[test]
+    fn test_treemap_order() {
+
     }
 }
