@@ -51,14 +51,16 @@ impl Contract {
 mod tests {
     use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
     use near_sdk::collections::TreeMap;
+    use near_sdk::AccountId;
     use std::cmp::Ordering;
+    use std::str::FromStr;
 
     #[derive(Debug, BorshDeserialize, BorshSerialize, Clone)]
-    struct Pnl(u128);
+    struct Pnl(u128, AccountId);
 
     impl PartialEq<Self> for Pnl {
         fn eq(&self, other: &Self) -> bool {
-            self.0 == other.0
+            self.0 == other.0 && self.1 == other.1
         }
     }
 
@@ -67,7 +69,7 @@ mod tests {
     impl PartialOrd<Self> for Pnl {
         fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
             if self.0 == other.0 {
-                Some(Ordering::Equal)
+                self.1.partial_cmp(&other.1)
             } else if self.0 > other.0 {
                 Some(Ordering::Less)
             } else {
@@ -79,7 +81,7 @@ mod tests {
     impl Ord for Pnl {
         fn cmp(&self, other: &Self) -> Ordering {
             if self.0 == other.0 {
-                Ordering::Equal
+                self.1.cmp(&other.1)
             } else if self.0 > other.0 {
                 Ordering::Less
             } else {
@@ -91,12 +93,13 @@ mod tests {
     #[test]
     fn test_treemap_order() {
         let mut tree_map: TreeMap<Pnl, String> = TreeMap::new(b"t");
-        let pnl1 = Pnl(100);
-        let pnl2 = Pnl(500);
-        let pnl3 = Pnl(10000);
-        let pnl4 = Pnl(8000);
-        let pnl5 = Pnl(18000);
-        let pnl6 = Pnl(300);
+        let pnl1 = Pnl(100, AccountId::from_str("alice").unwrap());
+        let pnl2 = Pnl(500, AccountId::from_str("bob").unwrap());
+        let pnl3 = Pnl(10000, AccountId::from_str("cindy").unwrap());
+        let pnl4 = Pnl(8000, AccountId::from_str("denis").unwrap());
+        let pnl5 = Pnl(18000, AccountId::from_str("eric").unwrap());
+        let pnl6 = Pnl(300, AccountId::from_str("forest").unwrap());
+        let pnl7 = Pnl(500, AccountId::from_str("grady").unwrap());
 
         tree_map.insert(&pnl1, &"pnl1".to_string());
         tree_map.insert(&pnl2, &"pnl2".to_string());
@@ -104,6 +107,7 @@ mod tests {
         tree_map.insert(&pnl4, &"pnl4".to_string());
         tree_map.insert(&pnl5, &"pnl5".to_string());
         tree_map.insert(&pnl6, &"pnl6".to_string());
+        tree_map.insert(&pnl7, &"pnl7".to_string());
 
         let max_key = tree_map.max();
         let min_key = tree_map.min();
