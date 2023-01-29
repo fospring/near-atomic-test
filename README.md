@@ -19,11 +19,11 @@ cp ./target/wasm32-unknown-unknown/release/near_atomic_test.wasm ./res/
 * redeploy
   * if redeploy contract, delete the contract first
 ```shell
-near delete near-atomic-test.yongchun.testnet yongchun.testnet
+near delete decimal.yongchun.testnet yongchun.testnet
 ```
 * create account and init balance
 ```shell
-near create-account near-atomic-test.yongchun.testnet --masterAccount yongchun.testnet --initialBalance 10
+near create-account decimal.yongchun.testnet --masterAccount yongchun.testnet --initialBalance 10
 ```
 * deploy
 ```shell
