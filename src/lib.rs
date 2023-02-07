@@ -165,4 +165,15 @@ mod tests {
         let expect_funding_fee_changed = 1560000;
         assert_eq!(funding_fee_changed, expect_funding_fee_changed);
     }
+
+    #[test]
+    fn test_deserialize_json() {
+        let raw_price = r#"{
+            "multiplier": "10006555",
+            "decimals": 22
+        }"#;
+        let price: Decimal = near_sdk::serde_json::from_str(raw_price).unwrap();
+        assert_eq!(price.multiplier, 10006555);
+        assert_eq!(price.decimals, 22);
+    }
 }
