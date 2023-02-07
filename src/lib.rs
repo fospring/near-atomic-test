@@ -2,6 +2,7 @@ use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env, near_bindgen, PanicOnDefault,
 };
+use std::ops::Sub;
 
 use near_sdk::serde::{Deserialize, Serialize};
 
@@ -41,6 +42,51 @@ pub(crate) mod i128_dec_format {
     }
 }
 
+impl Decimal {
+    /// 数量乘价格
+    /// @self: quantity对应的USD价格, USD funding fee
+    /// @quantity: 已经乘上精度的数量
+    /// @decimals：USDC token的精度
+    pub fn cal_cost(&self, quantity: i128, decimals: u8) -> i128 {
+        let multiplier = quantity
+            .checked_mul(self.multiplier)
+            .unwrap_or_else(|| env::panic_str("multiply overflow"));
+        if decimals >= self.decimals {
+            return multiplier
+                .checked_mul(10_i128.pow((decimals - self.decimals) as u32))
+                .unwrap_or_else(|| env::panic_str("multiply overflow"));
+        }
+        multiplier / 10_i128.pow((self.decimals - decimals) as u32)
+    }
+}
+
+/// funding fee 相减
+/// cost_position → cost_position + position_qty * ( sum_unitary_fundings - last_sum_unitary_fundings)
+impl Sub for Decimal {
+    type Output = Decimal;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        if self.decimals == rhs.decimals {
+            Decimal {
+                multiplier: self.multiplier - rhs.multiplier,
+                decimals: self.decimals,
+            }
+        } else if self.decimals > rhs.decimals {
+            Decimal {
+                multiplier: self.multiplier
+                    - rhs.multiplier * (self.decimals - rhs.decimals) as i128,
+                decimals: self.decimals,
+            }
+        } else {
+            Decimal {
+                multiplier: self.multiplier * (rhs.decimals - self.decimals) as i128
+                    - rhs.multiplier,
+                decimals: rhs.decimals,
+            }
+        }
+    }
+}
+
 #[near_bindgen]
 impl Contract {
     /// Initializes deploying contract state.
@@ -76,16 +122,47 @@ impl Contract {
         }
         multiplier / 10_i128.pow((self.price.decimals - decimals) as u32)
     }
+}
 
-    pub fn cal_cost(quantity: i128, price: Decimal, decimals: u8) -> i128 {
-        let multiplier = quantity
-            .checked_mul(price.multiplier)
-            .unwrap_or_else(|| env::panic_str("multiply overflow"));
-        if decimals >= price.decimals {
-            return multiplier
-                .checked_mul(10_i128.pow((decimals - price.decimals) as u32))
-                .unwrap_or_else(|| env::panic_str("multiply overflow"));
-        }
-        multiplier / 10_i128.pow((price.decimals - decimals) as u32)
+#[cfg(test)]
+mod tests {
+    use super::Decimal;
+    #[test]
+    fn test_cal_cost() {
+        // 1.56 (10^18)
+        let position_qty: i128 = 1_560_000_000_000_000_000;
+        let usdc_decimals: u8 = 6;
+        // ETH price @1000.6555 USD/ETH, ETH decimals 18
+        let price = Decimal {
+            multiplier: 10006555,
+            decimals: 22,
+        };
+        let cost = price.cal_cost(position_qty, usdc_decimals);
+        // 1561022580 usdc -> 1561.022580 USDC
+        let expected_cost = 1561022580;
+        assert_eq!(cost, expected_cost);
+
+        // funding fee ETH @1.2222 USD/ETH, ETH decimals 18
+        let sum_unitary_long_fundings = Decimal {
+            multiplier: 12222,
+            decimals: 22,
+        };
+        let funding_fee = sum_unitary_long_fundings.cal_cost(position_qty, usdc_decimals);
+        // 1906632 usdc -> 1.906632 USD
+        let expected_funding = 1906632;
+        assert_eq!(funding_fee, expected_funding);
+
+        let last_sum_unitary_long_funding = sum_unitary_long_fundings;
+        // funding fee ETH @2.2222 USD/ETH, ETH decimals 18
+        let sum_unitary_long_funding = Decimal {
+            multiplier: 22222,
+            decimals: 22,
+        };
+
+        let funding_fee_changed = (sum_unitary_long_funding - last_sum_unitary_long_funding)
+            .cal_cost(position_qty, usdc_decimals);
+        // 1560000 usdc -> 1.560000 USD
+        let expect_funding_fee_changed = 1560000;
+        assert_eq!(funding_fee_changed, expect_funding_fee_changed);
     }
 }

@@ -1,183 +1,130 @@
-# near-atomic-test
-* Near contract status for test
+# Decimal type
+* use an int128 and an uint8 to express decimal types, eg `1.1111` on near smart contract
+## structure
 ```rust
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct Contract {
-    count: i32,
-    slots: [i32; 10],
-    num_infos_storage: UnorderedMap<i32, String>,
+#[derive(BorshSerialize, BorshDeserialize, Serialize, Deserialize, Clone, Copy)]
+#[cfg_attr(not(target_arch = "wasm32"), derive(Debug))]
+#[serde(crate = "near_sdk::serde")]
+pub struct Decimal {
+    #[serde(with = "i128_dec_format")]
+    pub multiplier: i128,
+    pub decimals: u8,
 }
 ```
-## build contract
-```shell
-RUSTFLAGS='-C link-arg=-s' cargo build --target wasm32-unknown-unknown --release
-mkdir -p res
-cp ./target/wasm32-unknown-unknown/release/near_atomic_test.wasm ./res/
-```
-## testnet
-* redeploy
-  * if redeploy contract, delete the contract first
-```shell
-near delete decimal.yongchun.testnet yongchun.testnet
-```
-* create account and init balance
-```shell
-near create-account decimal.yongchun.testnet --masterAccount yongchun.testnet --initialBalance 10
-```
-* deploy
-```shell
-near deploy --accountId near-atomic-test.yongchun.testnet  --wasmFile ./res/near_atomic_test.wasm --initFunction new --initArgs '{}'
-```
+## serialization
+```rust
+pub(crate) mod i128_dec_format {
+    use near_sdk::serde::de;
+    use near_sdk::serde::{Deserialize, Deserializer, Serializer};
 
-* call
-```shell
-# no panic
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet increase_may_panic "{\"is_panic\": false}"
-```
-view the [transaction on explorer](https://explorer.testnet.near.org/transactions/8RJuzqwBANgemNuFwdY72sUkDDbNmXQ4M7BaLu7jmT29)
-# query result
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet get_counter "{}"
-```
-view the [transaction on explorer](https://explorer.testnet.near.org/transactions/9HhYxZd9zeFhwAtBfSMnEQhiZjjFPZcb1Rrv5t9rR23f)
-# panic
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet increase_may_panic "{\"is_panic\": true}"
-```
-view the [transaction on explorer](https://explorer.testnet.near.org/transactions/8J2G4paLFuce5zKkH2owcWioSMJ2wivNbQ8vnbFjrnbp#FWTMUhnRGo2ui1fV59NCaWDhRxf2zzTeECpvkRq6wcL9)
-# query result again
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet get_counter "{}"
-```
-view the [transaction on explorer](https://explorer.testnet.near.org/transactions/3MwRwi5BdzrhQqNr7RDfrPr5VkgnzTvbgHVJffQDxSg9)
-## Promise call
-### then
-* calling [send_native_with_transfer_state](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L42)
-#### success case:
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": true}"
-```
-view the [transaction on explorer](https://explorer.testnet.near.org/transactions/AB2YVp5W8vnxMjsPwMDNV5ynEW9GkiquPdS3EhTYF2tz)
-* Result: counter increase by two(from 0 to 2): query the current value [transaction on explorer](https://explorer.testnet.near.org/transactions/9bS8sdhZosLMxp1ydcQCXxnHbWBgAXN3ur9bNLUDXd2n)
-#### with function_call fail case:
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": false}"
-```
-Receipts are: `Receipts: 9ccMBTydfJXkZiQqP2DNqAMPChcfygNX6htSkxcTifW7, 9TynuGyQdjsnKDhL75pppEFvDZHYxDVDcbgn4TV5pg3U, 8gnDDRecbQ7LKzuXkbpL9PrmTeKk7Zx25R6WcS1W71dM`
-* Result: counter increase by two(from 2 to 4): query the current value [transaction on explorer](https://explorer.testnet.near.org/transactions/6KVJaVSNXS734X9sGxnSGnNXU3pqBkm3XbQbMVfDJtED)
-### promise
-* calling [promise_action_create_sub_acc](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L86)
-* update state and promise ok
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_action_create_sub_acc "{}"
-```
-view the [transaction on explorer](https://explorer.testnet.near.org/transactions/9Rafq6tS8tfWowxxCf1XN4qMcCGyHgZHNJK2kXn21KGb)
-* update state and promise fail(Exceeded the account balance.)
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_actions_with_transfer_insufficient "{}"
-```
-view the [transaction on explorer](https://explorer.testnet.near.org/transactions/CVxiwEvRS7uCkhdaWWZKTKxZcGrQdnHcQWB71H3brwdM#Hu4PmuZWzHfeSHP39fuc3A4QDFEueaG1j8BUF1VEcN5L)
-* Result: 
-  * generate log
-  * Promise fail and state did not change.
+    pub fn serialize<S>(num: &i128, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&num.to_string())
+    }
 
-### Promise action
-* create account `wallet.yongchun.testnet` to receive native NEAR
-```shell
-near create-account wallet.yongchun.testnet --masterAccount yongchun.testnet --initialBalance 1
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<i128, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        String::deserialize(deserializer)?
+            .parse()
+            .map_err(de::Error::custom)
+    }
+}
 ```
-### send it near by contract with then promise success.
-calling [send_native_with_transfer_state](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L42)
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"wallet.yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": true}"
-```
-the account's balance increase `100000000:  [tx detail](https://explorer.testnet.near.org/transactions/6Et4hAMCv8E5u2Agie2Ro5DMLboLKuJy3odtRLznoWo4)
-### send it near by contract with then promise fail.
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"wallet.yongchun.testnet\", \"amount\": \"100000000\", \"is_success\": false}"
-```
-* Receipts: 7cmx5Z2BCarCXuk4LKR4QKkFPafBtbp9PcpmpJGHZkMh, 3ZKki25rG9RDU2d3DTqMNwma6WJSVBSWFq9JETx9tDPa, 7hzzSAiNheAZ9E3gZpyt5APbqiWFJVKsDNNC1f662d2M
-* Result: it's balance increase and contract's counter also increase(from 12 to 14),query [transaction details on explorer](https://explorer.testnet.near.org/transactions/2aYNTgJ4WPCUT5zN1tTd6WZhmZ57Xwe77fsDJNJX8qfD)
-### send action fail before then
-```shell
- near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet send_native_with_transfer_state "{\"user\": \"wallet.yongchun.testnet\", \"amount\": \"19999508525168242600000000\", \"is_success\": true}"
-```
-```text
-Receipt: 6Ft9gaSquudmQEYdEVS1fq8JMPxPLXT9PZu3zvsiYVSk
-        Log [near-atomic-test.yongchun.testnet]: contract value increase 1, current val is:17
-        Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Exceeded the account balance."}}
-```
-* Result: The first Promise(Send Near) failed, contract counter didn't change, and didn't call next promise
+## calculation
+* Sub: 
+  * eg: sum_unitary_fundings: cost_position → cost_position + position_qty * (sum_unitary_fundings - last_sum_unitary_fundings)
+```rust
+impl Sub for Decimal {
+    type Output = Decimal;
 
-### increase counter and send token to sub account(bob.near-atomic-test.yongchun.testnet)
-* calling [increase_and_transfer](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L110)
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet increase_and_transfer "{\"amount\": \"19999508525168242600000000\"}"
+    fn sub(self, rhs: Self) -> Self::Output {
+        if self.decimals == rhs.decimals {
+            Decimal {
+                multiplier: self.multiplier - rhs.multiplier,
+                decimals: self.decimals,
+            }
+        } else if self.decimals > rhs.decimals {
+            Decimal {
+                multiplier: self.multiplier
+                    - rhs.multiplier * (self.decimals - rhs.decimals) as i128,
+                decimals: self.decimals,
+            }
+        } else {
+            Decimal {
+                multiplier: self.multiplier * (rhs.decimals - self.decimals) as i128
+                    - rhs.multiplier,
+                decimals: rhs.decimals,
+            }
+        }
+    }
+}
 ```
-```text
-Doing account.functionCall()
-Receipt: BL4a6PkXS3b84tArHMrhEnvY1GCFLUbvGR4hmi3SEK3X
-        Log [near-atomic-test.yongchun.testnet]: contract value increase 1, current val is:19
-        Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Exceeded the account balance."}}
+* Multiple/Division
+```rust
+impl Decimal {
+    /// 数量乘价格
+    /// @self: quantity对应的USD价格, USD funding fee
+    /// @quantity: 已经乘上精度的数量
+    /// @decimals：USDC token的精度
+    pub fn cal_cost(&self, quantity: i128, decimals: u8) -> i128 {
+        let multiplier = quantity
+            .checked_mul(self.multiplier)
+            .unwrap_or_else(|| env::panic_str("multiply overflow"));
+        if decimals >= self.decimals {
+            return multiplier
+                .checked_mul(10_i128.pow((decimals - self.decimals) as u32))
+                .unwrap_or_else(|| env::panic_str("multiply overflow"));
+        }
+        multiplier / 10_i128.pow((self.decimals - decimals) as u32)
+    }
+}
 ```
-* Result: counter did not change.
+## Test
+```rust
+#[cfg(test)]
+mod tests {
+    use super::Decimal;
+    #[test]
+    fn test_cal_cost() {
+        // 1.56 (10^18)
+        let position_qty: i128 = 1_560_000_000_000_000_000;
+        let usdc_decimals: u8 = 6;
+        // ETH price @1000.6555 USD/ETH, ETH decimals 18
+        let price = Decimal {
+            multiplier: 10006555,
+            decimals: 22,
+        };
+        let cost = price.cal_cost(position_qty, usdc_decimals);
+        // 1561022580 usdc -> 1561.022580 USDC
+        let expected_cost = 1561022580;
+        assert_eq!(cost, expected_cost);
 
-### Function_Call directly
-calling [on_token_transfer_complete](https://github.com/fospring/near-atomic-test/blob/beta/0.1.0/src/lib.rs#L65)
-* fail
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet on_token_transfer_complete "{\"is_transfer_success\": false}"
-```
-```shell
-Doing account.functionCall()
-Receipts: DeDpy92o6B47w2nCRhXP5joCtwBPtkXfopEV7SCZUFAK, H15GNj9dEtidumKLxzfRxh3ittfbLoz16NgHNJUTj7DB
-        Log [near-atomic-test.yongchun.testnet]: contract value increase 1, current val is:21
-Receipt: 5WJ9jDEQub3rhtCE21SSuSwuxKY9hdEom3NQsZ7ophVg
-        Failure [near-atomic-test.yongchun.testnet]: Error: {"index":0,"kind":{"ExecutionError":"Smart contract panicked: token transfer has failed"}}
-```
-* Result: the counter has changed from 20 to 21, query counter state [transaction on explorer](https://explorer.testnet.near.org/transactions/JCKSi8TnAsKbQBg42kZvKUd5iqP1xramhSGDGHkrKZYi) after this call
+        // funding fee ETH @1.2222 USD/ETH, ETH decimals 18
+        let sum_unitary_long_fundings = Decimal {
+            multiplier: 12222,
+            decimals: 22,
+        };
+        let funding_fee = sum_unitary_long_fundings.cal_cost(position_qty, usdc_decimals);
+        // 1906632 usdc -> 1.906632 USD
+        let expected_funding = 1906632;
+        assert_eq!(funding_fee, expected_funding);
 
-### create
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_action_create_acc "{\"account\": \"aaa.near-atomic-test.yongchun.testnet\"}"
-```
-### delete
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet promise_delete_account "{\"account\": \"aaa.near-atomic-test.yongchun.testnet\"}"
-```
-```shell
-near delete aaa.near-atomic-test.yongchun.testnet near-atomic-test.yongchun.testnet --keyPath ~/.near-credentials/testnet/aaa.near-atomic-test.yongchun.testnet.json --masterAccount aaa.near-atomic-test.
-yongchun.testnet
-```
+        let last_sum_unitary_long_funding = sum_unitary_long_fundings;
+        // funding fee ETH @2.2222 USD/ETH, ETH decimals 18
+        let sum_unitary_long_funding = Decimal {
+            multiplier: 22222,
+            decimals: 22,
+        };
 
-## panic in loop
-* query vector slots's state:
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet get_slots "{}"
+        let funding_fee_changed = (sum_unitary_long_funding - last_sum_unitary_long_funding)
+            .cal_cost(position_qty, usdc_decimals);
+        // 1560000 usdc -> 1.560000 USD
+        let expect_funding_fee_changed = 1560000;
+        assert_eq!(funding_fee_changed, expect_funding_fee_changed);
+    }
+}
 ```
-* set slot's state to 0:
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_0 "{}"
-```
-[tx detail](https://explorer.testnet.near.org/transactions/8B9gZiS5NktEcWF96jevUPSh919g1KNadbQPrwzS7dJj)
-* set slot state to 10:
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10 "{}"
-```
-[tx detail](https://explorer.testnet.near.org/transactions/CxFT4hgYAawQKcNwwmJ5ztqh4bKHrQfmmiJGgU42j9nx)
-* set slot state to 10 but at index of 5 will panic(expected state rollback):
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10_panic_idx5 "{}"
-```
-[tx detail](https://explorer.testnet.near.org/transactions/7znLKekhjrGUEFZYfaQqPSJ3dshGdjkcWpsG9Re4nKgt#GnNLnvQ9xGsrYceqii8tGFeBaFcn37xeucUNFfVZqnX6)
-* set slot state to 10 by function
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10_by_fn "{}"
-```
-[tx detail](https://explorer.testnet.near.org/transactions/EFiiD52cv7mJSU4gJUhNEqUXgrkGbrGn8yyvoHqVrf4P)
-* set slot state to 10 by function, panic at index 5(expected state rollback)
-```shell
-near --accountId yongchun.testnet call near-atomic-test.yongchun.testnet slot_bit_set_10_by_fn_panic_idx5 "{}"
-```
-[tx detail](https://explorer.testnet.near.org/transactions/8C13oyZwsRZfesQn531hJDfc6PJFzMkHKxFmjW3KYh3A#5yQunL5S6t9iGxKi1i3tH7ymVKaJNJRGeQVF8Q1ycxZt)
